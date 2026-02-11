@@ -78,11 +78,9 @@ def ax_plot_graph(data: np.array,
 
 def show_reset(img_info: dict,
                atom_start_position: np.array,
-               destination_position: np.array,
-               template_nm: np.array = None,
-               template_wh: np.array = None) -> None:
+               destination_position: np.array) -> None:
     """
-    Show STM image, atom and target position, and template position at the reset step in reinforcement learning
+    Show STM image, atom and target position at the reset step in reinforcement learning
 
     Parameters
     ---------
@@ -91,9 +89,6 @@ def show_reset(img_info: dict,
 
     atom_start_position, destination_position : array_like
         atom and target position in STM coordinate (nm)
-
-    template_nm, template_wh: array_like, optional
-        template position and size in nm
 
     Returns
     -------
@@ -110,11 +105,6 @@ def show_reset(img_info: dict,
     e4 = offset_nm[1]
     extent = (e1, e2, e3, e4)
     ax.imshow(img, extent=extent)
-    if (template_nm is not None) and (template_wh is not None):
-        args = template_nm,template_wh[0], template_wh[1]
-        kwargs = {'linewidth':1, 'edgecolor':'r', 'facecolor':'none'}
-        rect = matplotlib.patches.Rectangle(*args, **kwargs)
-        ax.add_patch(rect)
 
     args = atom_start_position[0], atom_start_position[1]
     kwargs = {'s':20, 'linewidths':3, 'edgecolors':'#33dbff', 'color':None, 'label':'start'}
@@ -131,12 +121,10 @@ def show_done(img_info: dict,
               atom_position: np.array,
               atom_start_position: np.array,
               destination_position: np.array,
-              reward: float,
-              template_nm: np.array = None,
-              template_wh: np.array = None) -> None:
+              reward: float) -> None:
     """
     Show STM image, atom start and current position, target position,
-    episode reward, and template position when RL episode terminates
+    episode reward when RL episode terminates
 
     Parameters
     ---------
@@ -147,9 +135,6 @@ def show_done(img_info: dict,
 
     reward: float
         episode reward
-
-    template_nm, template_wh: array_like, optional
-        template position and size in nm
 
     Returns
     -------
@@ -167,11 +152,7 @@ def show_done(img_info: dict,
     e4 = offset_nm[1]
     extent = (e1, e2, e3, e4)
     ax.imshow(img, extent = extent)
-    if (template_nm is not None) and (template_wh is not None):
-        args = template_nm,template_wh[0], template_wh[1]
-        kwargs = {'linewidth':1, 'edgecolor':'r', 'facecolor':'none'}
-        rect = matplotlib.patches.Rectangle(*args, **kwargs)
-        ax.add_patch(rect)
+    
     kwargs = {'s':20, 'linewidths':3, 'edgecolors':'#33dbff', 'color':None, 'label':'start'}
     ax.scatter(atom_start_position[0], atom_start_position[1], **kwargs)
     kwargs = {'s':20, 'linewidths':3, 'edgecolors':'#75ff33', 'color': None, 'label':'goal'}
@@ -191,11 +172,9 @@ def show_step(img_info: dict,
               atom_start_position: np.array,
               destination_position: np.array,
               mvolt: float,
-              pcurrent: float,
-              template_nm: np.array = None,
-              template_wh: np.array = None) -> None:
+              pcurrent: float) -> None:
     """Show STM image, atom start and current position, target position,
-    bias, current setpoint, and template position when environment takes RL step
+    bias, current setpoint when environment takes RL step
 
     Parameters
     ---------
@@ -207,9 +186,6 @@ def show_step(img_info: dict,
 
     mvolt, pcurrent : float
         bias in mV and current in pA
-
-    template_nm, template_wh : array_like, optional
-        template position and size in nm
 
     Returns
     -------
@@ -227,11 +203,7 @@ def show_step(img_info: dict,
     e4 = offset_nm[1]
     extent = (e1, e2, e3, e4)
     ax.imshow(img, extent=extent)
-    if (template_nm is not None) and (template_wh is not None):
-        args = template_nm,template_wh[0], template_wh[1]
-        kwargs = {'linewidth':1, 'edgecolor':'r', 'facecolor':'none'}
-        rect = matplotlib.patches.Rectangle(*args, **kwargs)
-        ax.add_patch(rect)
+    
     kwargs = {'s':20, 'linewidths':3, 'edgecolors':'#33dbff', 'color':None, 'label':'start'}
     ax.scatter(atom_start_position[0], atom_start_position[1], **kwargs)
     kwargs = {'s':20, 'linewidths':3, 'edgecolors':'#ff5733', 'color':None, 'label':'atom'}
