@@ -31,7 +31,7 @@ class RealExpEnv:
         self.max_pcurrent_to_mvolt_ratio = max_pcurrent_to_mvolt_ratio
         self.pixel = pixel
         self.goal_nm = goal_nm
-
+        args = im_size_nm, offset_nm, pixel, scan_mV
         self.createc_controller = Createc_Controller(*args)
         self.current_jump = current_jump
         self.manip_limit_nm = manip_limit_nm
@@ -47,7 +47,7 @@ class RealExpEnv:
         self.correct_drift = correct_drift
         self.atom_absolute_nm = None
         self.atom_relative_nm = None
-        self.drift = None
+        self.drift_nm = None
         self.last_img = None
 
         self.lattice_constant = 0.288
@@ -74,7 +74,7 @@ class RealExpEnv:
         info: dict
         """
         self.len = 0
-        self.drift = 0
+        self.drift_nm = 0
 
         if (len(self.atom_move_detector.currents_val)>self.atom_move_detector.batch_size) and update_conv_net:
             accuracy, true_positive, true_negative = self.atom_move_detector.eval()
@@ -86,6 +86,7 @@ class RealExpEnv:
         if (self.atom_absolute_nm is None) or (self.atom_relative_nm is None):
             self.atom_absolute_nm, self.atom_relative_nm = self.scan_atom()
 
+        print(self.out_of_range(self.atom_absolute_nm, self.inner_limit_nm))
         if self.out_of_range(self.atom_absolute_nm, self.inner_limit_nm):
             raise NotImplementedError('待改为切换其他原子继续')
 
@@ -207,8 +208,8 @@ class RealExpEnv:
         
         self.offset_nm += drift_nm
         
-        atom_pixel_forward = get_atom_pixel(img_forward)
-        atom_pixel_backward = get_atom_pixel(img_backward)
+        atom_pixel_forward = get_atom_coordinate_pixel(img_forward)
+        atom_pixel_backward = get_atom_coordinate_pixel(img_backward)
         
         # stm的offset对应扫图正上方的小圆点，计算offsets为扫图的左上角，因此x轴上需减去扫图长度的一半
         offsets = np.array([self.offset_nm[0]-len_nm[0]/2, self.offset_nm[1]])
@@ -224,14 +225,21 @@ class RealExpEnv:
         self.atom_relative_nm_f = atom_relative_nm_f
         self.atom_absolute_nm_b = atom_absolute_nm_b
         self.atom_relative_nm_b = atom_relative_nm_b
+        print('atom_absolute_nm_f:', atom_absolute_nm_f)
+        print('atom_absolute_nm_b:', atom_absolute_nm_b)
+        print('atom_relative_nm_f:', atom_relative_nm_f)
+        print('atom_relative_nm_b:', atom_relative_nm_b)
 
         self.atom_absolute_nm, self.atom_relative_nm = 0.5*(atom_absolute_nm_f+atom_absolute_nm_b), 0.5*(atom_relative_nm_f+atom_relative_nm_b)
+        random_index = np.random.choice(self.atom_absolute_nm.shape[0])
+        self.atom_absolute_nm, self.atom_relative_nm = self.atom_absolute_nm[random_index], self.atom_relative_nm[random_index]
 
+        print('out of range:', self.out_of_range(self.atom_absolute_nm, self.manip_limit_nm))
         if self.out_of_range(self.atom_absolute_nm, self.manip_limit_nm):
             print('Warning: atom is out of limit')
             
-        self.createc_controller.offset_nm+=drift
-        self.manip_limit_nm += np.array((drift[0], drift[0], drift[1], drift[1]))
+        self.createc_controller.offset_nm+=drift_nm
+        self.manip_limit_nm += np.array((drift_nm[0], drift_nm[0], drift_nm[1], drift_nm[1]))
         self.inner_limit_nm = self.manip_limit_nm + np.array([1,-1,1,-1])
 
         self.last_img = (img_forward, img_backward)
@@ -450,8 +458,8 @@ class RealExpEnv:
 
     def _calc_drift(self, img):
         if self.last_img is None:
-            return 0
+            return np.array([0,0])
         img_forward, img_backward = img
         shift_forward, _, _ = phase_cross_correlation(img_forward, self.last_img[0])
         shift_backward, _, _ = phase_cross_correlation(img_backward, self.last_img[1])
-        return (shift_forward+shift_backward)/2
+        return np.array([(shift_forward+shift_backward)/2])
